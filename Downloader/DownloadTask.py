@@ -101,11 +101,11 @@ class DownloadTask:
 
                 if response.status_code == 206:
                     isSupport = True
-                    lengthPattern = re.compile(r'bytes 0-4/(\d+)')
+                    lengthPattern = re.compile(r'.*?/(\d+)')
                     r = re.findall(
                         lengthPattern, response.headers['Content-Range'])
                     if len(r):
-                        self.fileSize = int(r[0])
+                        self.fileSize = long(r[0])
                     else:
                         self.fileSize = 0
                 elif response.status_code == 200:
@@ -142,8 +142,9 @@ class DownloadTask:
                 # stream=True, cookies=self.cookies, timeout=5)
                 count = 0
 
+                #fix 此处不绝对
                 if int(res.headers['Content-Length']) != (end - start + 1):
-                    raise GetError()
+                   raise GetError()
 
                 # 要以读写方式打开
                 with open(os.path.join(self.filePath,self.filename), 'rb+') as f:
@@ -166,7 +167,7 @@ class DownloadTask:
                         print start, '-', end, ' count ', count, ' done'
                     lock.release()
 
-        except requests.exceptions.Timeout:
+        except requests.exceptions.Timeout,requests.exceptions.ConnectionError:
             self._chunkSize[chunkIndex][1] = 0
             if threadPool:
                 threadPool.put(target=self.downloadThread,
@@ -200,7 +201,7 @@ class DownloadTask:
         self._chunkNum = conNum
         self._chunkSize = [0] * conNum
 
-        threadPool = MyThreadPool()
+        threadPool = MyThreadPool(maxThreadNum=self._connectionNum)
 
         for i in range(conNum):
             start = i * preSize

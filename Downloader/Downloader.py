@@ -55,4 +55,5 @@ if __name__ == '__main__':
     #url = ''
     url = raw_input(u'输入下载地址:'.encode(sys.stdout.encoding))
     dler = Downloader()
+    dler.connectionNum = 32
     dler.createAndStart(url,filePath='./download')
